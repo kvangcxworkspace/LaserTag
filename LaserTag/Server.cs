@@ -2,7 +2,6 @@
 using System.IO;
 using System.Net.Sockets;
 using System.Threading;
-using System.Configuration;
 using System.Collections.Generic;
 using System.Net;
 
@@ -17,7 +16,7 @@ namespace LaserTagServer
         private const int CLIENT_LIMIT = 5; // 5 concurrent clients
 
         // Tempary Table
-        private Dictionary<int, string> DICT = new Dictionary<int, string>();
+        private Dictionary<int, string> OPERATIONS = new Dictionary<int, string>();
 
         public Server(int port)
         {
@@ -27,9 +26,9 @@ namespace LaserTagServer
             LISTENER = new TcpListener(ADDRESS, PORT);
 
             // Set tempary table
-            DICT.Add(1, "Initializing Connection");
-            DICT.Add(2, "Join Game");
-            DICT.Add(3, "Death");
+            OPERATIONS.Add(1, "Initializing Connection");
+            OPERATIONS.Add(2, "Join Game");
+            OPERATIONS.Add(3, "Death");
         }
 
         public void Run()
@@ -57,15 +56,23 @@ namespace LaserTagServer
                     StreamReader sr = new StreamReader(s);
                     StreamWriter sw = new StreamWriter(s);
                     sw.AutoFlush = true;
-                    sw.WriteLine("{0} Clients ", DICT.Count);
+                    sw.WriteLine("{0} Operations ", OPERATIONS.Count);
                     while(true)
                     {
                         int key = Convert.ToInt32(sr.ReadLine());
-                        if (key == 0) break;
-                        string value = DICT[key];
-                        if (value == "" || value == null) value = "Invalid Status Type";
+                        if (key == 0)
+                        {
+                            sw.WriteLine("Disconnected");
+                            break;
+                        }
+
+                        string value = "Invalid Operation";
+                        if (OPERATIONS.ContainsKey(key))
+                            value = OPERATIONS[key];
+                        
                         sw.WriteLine(value);
                     }
+                    s.Close();
                 }
                 catch(Exception e)
                 {
