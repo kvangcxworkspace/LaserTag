@@ -15,7 +15,7 @@ namespace LaserTag
         public Client(int port)
         {
             SERVER = Dns.GetHostName();
-            ADDRESS = Dns.GetHostAddresses(SERVER)[0];
+            ADDRESS = Dns.GetHostAddresses(SERVER)[0]; 
             PORT = port;
             CLIENT = new TcpClient(ADDRESS.ToString(), PORT);
 
@@ -36,7 +36,7 @@ namespace LaserTag
                 {
                     Console.WriteLine("Operation: ");
                     string operation = Console.ReadLine();
-                    if (operation == "") break;
+                    if (operation == "") operation = "0";
 
                     sw.WriteLine(operation);
                     string value = sr.ReadLine();

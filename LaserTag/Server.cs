@@ -4,6 +4,8 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Collections.Generic;
 using System.Net;
+using MySql.Data;
+using MySql.Data.MySqlClient;
 
 namespace LaserTagServer
 {
@@ -14,7 +16,8 @@ namespace LaserTagServer
         private string SERVER;
         private int PORT;
         private const int CLIENT_LIMIT = 5; // 5 concurrent clients
-        
+        private MySqlConnection DBCONNECTION;
+
         private Dictionary<int, string> OPERATIONS = new Dictionary<int, string>();
 
         public Server(int port)
@@ -31,6 +34,8 @@ namespace LaserTagServer
 
         public void Run()
         {
+            DBConnect();
+
             LISTENER.Start();
             Console.WriteLine("Server mouted, listening to PORT: {0}", PORT);
 
@@ -39,6 +44,8 @@ namespace LaserTagServer
                 Thread t = new Thread(new ThreadStart(Service));
                 t.Start();
             }
+
+            DBDisconnect();
         }
 
         private void Service()
@@ -81,6 +88,37 @@ namespace LaserTagServer
                 Console.WriteLine("Disconnected: {0}", soc.RemoteEndPoint);
                 soc.Close();
             }
+        }
+
+        private void DBConnect()
+        {
+            string server = "127.0.0.1";
+            string port = "3306";
+            string databaseName = "LaserTagDataBase";
+            string username = "LaserTagServer";
+            string password = "LaserTagServerPassword101";
+
+            string connstring = string.Format("Server={0};Port={1};database={2};UID={3};password={4}",
+                server, port, databaseName, username, password);
+            Console.WriteLine("Data Base Connection : " + connstring);
+            DBCONNECTION = new MySqlConnection(connstring);
+
+            try
+            {
+                DBCONNECTION.Open();
+                Console.WriteLine("Database Connection Open");
+                DBCONNECTION.Close();
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("Unable to connect to database: " + ex.Message);
+            }
+        }
+        
+        private void DBDisconnect()
+        {
+            DBCONNECTION.Close();
+            Console.WriteLine("Disconnect Data Base");
         }
     }
 }

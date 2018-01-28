@@ -12,6 +12,8 @@ namespace LaserTag
             Thread clientThread2 = new Thread(new ThreadStart(RunClient));
 
             serverThread.Start();
+            serverThread.Join();
+
             clientThread1.Start();
 
             clientThread1.Join();
