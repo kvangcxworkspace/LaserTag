@@ -8,17 +8,16 @@ namespace LaserTag
         static void Main(string[] args)
         {
             Thread serverThread = new Thread(new ThreadStart(RunServer));
-            Thread clientThread1 = new Thread(new ThreadStart(RunClient));
-            Thread clientThread2 = new Thread(new ThreadStart(RunClient));
+            //Thread clientThread1 = new Thread(new ThreadStart(RunClient));
+            //Thread clientThread2 = new Thread(new ThreadStart(RunClient));
 
             serverThread.Start();
-            serverThread.Join();
 
-            clientThread1.Start();
+            //clientThread1.Start();
 
-            clientThread1.Join();
+            //clientThread1.Join();
 
-            clientThread2.Start();
+            //clientThread2.Start();
         }
 
         public static void RunServer()
