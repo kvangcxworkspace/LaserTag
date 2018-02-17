@@ -10,6 +10,18 @@ using System.Text;
 
 namespace LaserTagServer
 {
+    struct ClientOperationData
+    {
+        public byte OPERATION_CODE;
+        public byte[] OPERATION_DATA;
+
+        public ClientOperationData(byte operationCode, byte[] operationData)
+        {
+            OPERATION_CODE = operationCode;
+            OPERATION_DATA = operationData;
+        }
+    }
+
     class Server
     {
         //private TcpListener LISTENER;
@@ -22,8 +34,6 @@ namespace LaserTagServer
         private MySqlConnection DBCONNECTION;
         private bool RUNNING; 
 
-        private Dictionary<int, string> OPERATIONS = new Dictionary<int, string>();
-
         public Server(int port)
         {
             SERVER = Dns.GetHostName();
@@ -31,57 +41,99 @@ namespace LaserTagServer
             PORT = port;
             IPEP = new IPEndPoint(ADDRESS, PORT);
             SOCK = new UdpClient(IPEP);
-
-            OPERATIONS.Add(0, "KILL SERVER");
-            OPERATIONS.Add(1, "Initializing Connection");
-            OPERATIONS.Add(2, "Join Game");
-            OPERATIONS.Add(3, "Death");
-
+            
             RUNNING = true;
         }
 
         public void Run()
         {
-            DBConnect();
-
             IPEndPoint client = new IPEndPoint(IPAddress.Any, 0);
-            byte[] data = new byte[1024];
-            byte[] response;
 
             while (RUNNING)
             {
-                data = SOCK.Receive(ref client);
+                byte[] data = SOCK.Receive(ref client);
                 Console.Write("Message received from {0} : ", client.ToString());
                 Console.WriteLine(Encoding.ASCII.GetString(data, 0, data.Length));
 
-                response = ParseData(data);
+                ClientOperationData clientOperationData = ParseData(data);
+                byte[] response = handleData(clientOperationData);
+
                 Console.WriteLine("Responding with: {0}", Encoding.ASCII.GetString(response, 0, response.Length));
                 SOCK.Send(response, response.Length, client);
             }
-
-            DBDisconnect();
         }
 
-        private byte[] ParseData(byte[] data)
+        private byte[] handleData(ClientOperationData clientOpeartionData)
         {
-            string response = "INVALID OPERATION CODE";
-            int key = -1;
+            string response = "";
 
-            if (!Int32.TryParse(Encoding.ASCII.GetString(data), out key))
-                return Encoding.ASCII.GetBytes(response);
+            switch (clientOpeartionData.OPERATION_CODE)
+            {
+                case (byte)'1': // connecting get username
+                    int uniqueKey;
+                    Int32.TryParse(Encoding.ASCII.GetString(clientOpeartionData.OPERATION_DATA), out uniqueKey);
+                    string mysqlQuery = "SELECT username FROM clientuserdata WHERE unique_key = " + uniqueKey.ToString();
+                    string username = queryDatabase(mysqlQuery);
 
-            if( !OPERATIONS.ContainsKey(key) )
-                return Encoding.ASCII.GetBytes(response);
+                    if(username != "")
+                        response = "1" + username;
 
-            response = OPERATIONS[key];
+                    break;
 
-            if (key == 0)
-                RUNNING = false;
+                case (byte)'2': // join game
+                    break;
+
+                default:
+                    response = "0";
+                    break;
+            }
 
             return Encoding.ASCII.GetBytes(response);
         }
 
-        private void DBConnect()
+        private string queryDatabase(string query)
+        {
+            string username = "";
+
+            if (!DBConnect())
+                return username;
+
+            try
+            {
+                MySqlCommand cmd = new MySqlCommand(query, DBCONNECTION);
+                MySqlDataReader rdr = cmd.ExecuteReader();
+
+                while (rdr.Read())
+                {
+                    username += rdr[0];
+                }
+                rdr.Close();
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("FAIL TO QUERY THE DATABASE: " + ex.ToString());
+            }
+
+            DBDisconnect();
+            return username;
+        }
+
+        private ClientOperationData ParseData(byte[] data)
+        {
+            byte operation = 0x00;
+            byte[] operationData = new byte[data.Length - 1];
+
+            if (data.Length < 1)
+                return new ClientOperationData(operation, operationData);
+
+            operation = data[0];
+            for (int index = 1; index < data.Length; index++)
+                operationData[index - 1] = data[index];
+            
+            return new ClientOperationData(operation, operationData);
+        }
+
+        private bool DBConnect()
         {
             string server = "127.0.0.1";
             string port = "3306";
@@ -98,12 +150,14 @@ namespace LaserTagServer
             {
                 DBCONNECTION.Open();
                 Console.WriteLine("Database Connection Open");
-                DBCONNECTION.Close();
+                return true;
             }
             catch(Exception ex)
             {
                 Console.WriteLine("Unable to connect to database: " + ex.Message);
             }
+
+            return false;
         }
         
         private void DBDisconnect()

@@ -16,32 +16,56 @@
 #include <SPI.h>
 #include <WiFi101.h>
 #include <WiFiUdp.h>
+#include "arduino_secrets.h"
 
-int status = WL_IDLE_STATUS;
-#include "arduino_secrets.h" 
+int status = WL_IDLE_STATUS; 
+
 ///////please enter your sensitive data in the Secret tab/arduino_secrets.h
 char ssid[] = SECRET_SSID;        // your network SSID (name)
 char pass[] = SECRET_PASS;    // your network password (use for WPA, or use as key for WEP)
-int keyIndex = 0;            // your network key Index number (needed only for WEP)
 
-unsigned int localPort = 8000;      // local port to listen on
 
-char packetBuffer[255]; //buffer to hold incoming packet
-char  sendMessage[] = "1";       // a string to send back
+WiFiUDP udp;
 IPAddress server(10,0,0,74);
 int port = 8000;
-WiFiUDP Udp;
+int wifi_connection_delay = 10000;
 
-void setup() {
+char connect_server[10]; // the connect message for the server
+char server_response_data[255]; //buffer to hold incoming packet from the server
+
+char username[255];
+
+void setup() 
+{
+  connectWifi();
+  
+  Serial.println("Connected to wifi");
+  printWiFiStatus();
+
+  Serial.println("\nStarting connection to server...");
+  // if you get a connection, report back via serial:
+  udp.begin(port);
+
+  // connect to the server and obtain our username
+  strcpy (connect_server,"1");
+  strcat (connect_server,SECRET_UNIQUE_KEY);
+  sendMessage(connect_server); // send the connect message to the server
+  receiveMessage(server_response_data); // receive the connect response from the server
+  handleResponse(server_response_data); // handle the response from the server
+}
+
+void loop() 
+{
+  
+  // wait 5 seconds for connection:
+  delay(5000);
+}
+
+void connectWifi()
+{
   //Configure pins for Adafruit ATWINC1500 Feather
   WiFi.setPins(8,7,4,2);
-
-  //Initialize serial and wait for port to open:
-  Serial.begin(9600);
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB port only
-  }
-
+  
   // check for the presence of the shield:
   if (WiFi.status() == WL_NO_SHIELD) {
     Serial.println("WiFi shield not present");
@@ -57,46 +81,9 @@ void setup() {
     status = WiFi.begin(ssid, pass);
 
     // wait 10 seconds for connection:
-    delay(10000);
+    delay(wifi_connection_delay);
   }
-  Serial.println("Connected to wifi");
-  printWiFiStatus();
-
-  Serial.println("\nStarting connection to server...");
-  // if you get a connection, report back via serial:
-  Udp.begin(port);
 }
-
-void loop() {
-
-  // send a reply, to the IP address and port that sent us the packet we received
-  Udp.beginPacket(server, port);
-  Udp.write(sendMessage);
-  Udp.endPacket();
-    
-  // if there's data available, read a packet
-  int packetSize = Udp.parsePacket();
-  if (packetSize)
-  {
-    Serial.print("Received packet of size ");
-    Serial.println(packetSize);
-    Serial.print("From ");
-    IPAddress remoteIp = Udp.remoteIP();
-    Serial.print(remoteIp);
-    Serial.print(", port ");
-    Serial.println(Udp.remotePort());
-
-    // read the packet into packetBufffer
-    int len = Udp.read(packetBuffer, 255);
-    if (len > 0) packetBuffer[len] = 0;
-    Serial.println("Contents:");
-    Serial.println(packetBuffer);
-  }
-
-  // wait 5 seconds for connection:
-  delay(5000);
-}
-
 
 void printWiFiStatus() {
   // print the SSID of the network you're attached to:
@@ -115,6 +102,59 @@ void printWiFiStatus() {
   Serial.println(" dBm");
 }
 
+void sendMessage(char message[])
+{
+  Serial.print("Sending Message: ");
+  Serial.println(message);
+  
+  // Ask the connect to the server and obtain our username 
+  udp.beginPacket(server, port);
+  udp.write(message);
+  udp.endPacket();
+}
 
+void receiveMessage(char * response)
+{
+  // if there's data available, read a packet
+  int packetSize = udp.parsePacket();
+  char packetBuffer[255];
+  
+  while(!packetSize) packetSize = udp.parsePacket();
+  
+  Serial.print("Received packet of size ");
+  Serial.println(packetSize);
+  Serial.print("From ");
+  IPAddress remoteIp = udp.remoteIP();
+  Serial.print(remoteIp);
+  Serial.print(", port ");
+  Serial.println(udp.remotePort());
 
+  // read the packet into packetBufffer
+  int len = udp.read(response, 255);
+  if (len > 0) response[len] = 0;
+  Serial.println("Contents:");
+  Serial.println(response);
+}
+
+void handleResponse(char response[])
+{
+  if (strlen(response) < 1)
+    return;
+
+  switch(response[0])
+  {
+    case '1': 
+    {
+      memmove(username, response+1, strlen(response));
+      Serial.print("Username: ");
+      Serial.println(username);
+      break;
+    }
+    
+    default:
+    {
+      break;
+    }
+  }
+}
 
