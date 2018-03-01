@@ -5,31 +5,19 @@ namespace LaserTag
 {
     class Program
     {
+        private static int PORT = 8000;
+
         static void Main(string[] args)
         {
             Thread serverThread = new Thread(new ThreadStart(RunServer));
-            //Thread clientThread1 = new Thread(new ThreadStart(RunClient));
-            //Thread clientThread2 = new Thread(new ThreadStart(RunClient));
 
             serverThread.Start();
-
-            //clientThread1.Start();
-
-            //clientThread1.Join();
-
-            //clientThread2.Start();
         }
 
         public static void RunServer()
         {
-            Server server = new Server(8000);
+            Server server = new Server(PORT);
             server.Run();
-        }
-
-        public static void RunClient()
-        {
-            Client client = new Client(8000);
-            client.Run();
         }
     }
 }

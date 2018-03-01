@@ -41,12 +41,15 @@ namespace LaserTagServer
             PORT = port;
             IPEP = new IPEndPoint(ADDRESS, PORT);
             SOCK = new UdpClient(IPEP);
-            
+
+            InitializeDataBase();
+
             RUNNING = true;
         }
 
         public void Run()
         {
+            Console.Write("Listening For Incomming Messages...");
             IPEndPoint client = new IPEndPoint(IPAddress.Any, 0);
 
             while (RUNNING)
@@ -70,10 +73,13 @@ namespace LaserTagServer
             switch (clientOpeartionData.OPERATION_CODE)
             {
                 case (byte)'1': // connecting get username
-                    int uniqueKey;
-                    Int32.TryParse(Encoding.ASCII.GetString(clientOpeartionData.OPERATION_DATA), out uniqueKey);
-                    string mysqlQuery = "SELECT username FROM clientuserdata WHERE unique_key = " + uniqueKey.ToString();
-                    string username = queryDatabase(mysqlQuery);
+                    string uniqueKey = Encoding.ASCII.GetString(clientOpeartionData.OPERATION_DATA);
+                    string mysqlQuery = "SELECT username FROM clientuserdata WHERE unique_key = @uniquekey";
+
+                    MySqlCommand cmd = new MySqlCommand(mysqlQuery, DBCONNECTION);
+                    cmd.Parameters.AddWithValue("@uniquekey", uniqueKey);
+
+                    string username = queryDatabase(cmd);
 
                     if(username != "")
                         response = "1" + username;
@@ -91,7 +97,7 @@ namespace LaserTagServer
             return Encoding.ASCII.GetBytes(response);
         }
 
-        private string queryDatabase(string query)
+        private string queryDatabase(MySqlCommand cmd)
         {
             string username = "";
 
@@ -100,7 +106,6 @@ namespace LaserTagServer
 
             try
             {
-                MySqlCommand cmd = new MySqlCommand(query, DBCONNECTION);
                 MySqlDataReader rdr = cmd.ExecuteReader();
 
                 while (rdr.Read())
@@ -133,7 +138,7 @@ namespace LaserTagServer
             return new ClientOperationData(operation, operationData);
         }
 
-        private bool DBConnect()
+        private void InitializeDataBase()
         {
             string server = "127.0.0.1";
             string port = "3306";
@@ -145,7 +150,10 @@ namespace LaserTagServer
                 server, port, databaseName, username, password);
             Console.WriteLine("Data Base Connection : " + connstring);
             DBCONNECTION = new MySqlConnection(connstring);
+        }
 
+        private bool DBConnect()
+        {
             try
             {
                 DBCONNECTION.Open();

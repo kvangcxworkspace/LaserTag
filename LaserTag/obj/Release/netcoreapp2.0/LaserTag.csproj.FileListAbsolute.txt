@@ -1,0 +1,11 @@
+C:\Users\kvang\Documents\GitHub\LaserTag\LaserTag\bin\Release\netcoreapp2.0\LaserTag.deps.json
+C:\Users\kvang\Documents\GitHub\LaserTag\LaserTag\bin\Release\netcoreapp2.0\LaserTag.runtimeconfig.json
+C:\Users\kvang\Documents\GitHub\LaserTag\LaserTag\bin\Release\netcoreapp2.0\LaserTag.runtimeconfig.dev.json
+C:\Users\kvang\Documents\GitHub\LaserTag\LaserTag\bin\Release\netcoreapp2.0\LaserTag.dll
+C:\Users\kvang\Documents\GitHub\LaserTag\LaserTag\bin\Release\netcoreapp2.0\LaserTag.pdb
+C:\Users\kvang\Documents\GitHub\LaserTag\LaserTag\bin\Release\netcoreapp2.0\Microsoft.VisualStudio.Configuration.dll
+C:\Users\kvang\Documents\GitHub\LaserTag\LaserTag\obj\Release\netcoreapp2.0\LaserTag.csproj.CoreCompileInputs.cache
+C:\Users\kvang\Documents\GitHub\LaserTag\LaserTag\obj\Release\netcoreapp2.0\LaserTag.AssemblyInfoInputs.cache
+C:\Users\kvang\Documents\GitHub\LaserTag\LaserTag\obj\Release\netcoreapp2.0\LaserTag.AssemblyInfo.cs
+C:\Users\kvang\Documents\GitHub\LaserTag\LaserTag\obj\Release\netcoreapp2.0\LaserTag.dll
+C:\Users\kvang\Documents\GitHub\LaserTag\LaserTag\obj\Release\netcoreapp2.0\LaserTag.pdb
