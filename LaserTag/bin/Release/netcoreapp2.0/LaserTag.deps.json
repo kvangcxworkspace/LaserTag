@@ -1,29 +1,20 @@
 {
   "runtimeTarget": {
     "name": ".NETCoreApp,Version=v2.0",
-<<<<<<< HEAD
-    "signature": "da39a3ee5e6b4b0d3255bfef95601890afd80709"
-=======
     "signature": "addeec7a7c1cd36c892fc40ca397f64ef821dc3f"
->>>>>>> develop
   },
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v2.0": {
       "LaserTag/1.0.0": {
         "dependencies": {
-<<<<<<< HEAD
-=======
           "MySql.Data": "6.10.6",
->>>>>>> develop
           "Microsoft.VisualStudio.Configuration": "15.0.0.0"
         },
         "runtime": {
           "LaserTag.dll": {}
         }
       },
-<<<<<<< HEAD
-=======
       "Microsoft.NETCore.Targets/1.0.1": {},
       "MySql.Data/6.10.6": {
         "dependencies": {
@@ -200,7 +191,6 @@
           "System.Runtime": "4.1.0"
         }
       },
->>>>>>> develop
       "Microsoft.VisualStudio.Configuration/15.0.0.0": {
         "runtime": {
           "Microsoft.VisualStudio.Configuration.dll": {}
@@ -214,8 +204,6 @@
       "serviceable": false,
       "sha512": ""
     },
-<<<<<<< HEAD
-=======
     "Microsoft.NETCore.Targets/1.0.1": {
       "type": "package",
       "serviceable": true,
@@ -363,7 +351,6 @@
       "path": "system.threading.tasks/4.0.11",
       "hashPath": "system.threading.tasks.4.0.11.nupkg.sha512"
     },
->>>>>>> develop
     "Microsoft.VisualStudio.Configuration/15.0.0.0": {
       "type": "reference",
       "serviceable": false,
