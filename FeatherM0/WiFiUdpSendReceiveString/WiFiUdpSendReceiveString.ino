@@ -1,24 +1,25 @@
 /*
   WiFi UDP Send and Receive String
 
- This sketch wait an UDP packet on localPort using a WiFi shield.
- When a packet is received an Acknowledge packet is sent to the client on port remotePort
+  This sketch wait an UDP packet on localPort using a WiFi shield.
+  When a packet is received an Acknowledge packet is sent to the client on port remotePort
 
- Circuit:
- * WiFi shield attached
+  Circuit:
+   WiFi shield attached
 
- created 30 December 2012
- by dlf (Metodo2 srl)
+  created 30 December 2012
+  by dlf (Metodo2 srl)
 
- */
+*/
 
 
 #include <SPI.h>
 #include <WiFi101.h>
 #include <WiFiUdp.h>
+#include <IRLibAll.h>
 #include "arduino_secrets.h"
 
-int status = WL_IDLE_STATUS; 
+int status = WL_IDLE_STATUS;
 
 ///////please enter your sensitive data in the Secret tab/arduino_secrets.h
 char ssid[] = SECRET_SSID;        // your network SSID (name)
@@ -26,7 +27,7 @@ char pass[] = SECRET_PASS;    // your network password (use for WPA, or use as k
 
 
 WiFiUDP udp;
-IPAddress server(10,0,0,74);
+IPAddress server(10, 0, 0, 74);
 
 char connect_server[34]; // the connect message for the server
 char server_response_data[255]; //buffer to hold incoming packet from the server
@@ -34,32 +35,47 @@ char server_response_data[255]; //buffer to hold incoming packet from the server
 char serial_number[33];
 char username[255];
 
-void setup() 
+IRrecvPCI myReceiver(15);
+IRdecode myDecoder;
+
+void setup()
 {
   //Configure pins for Adafruit ATWINC1500 Feather
-  WiFi.setPins(8,7,4,2);
+  WiFi.setPins(8, 7, 4, 2);
   connectWifi();
-  
+
   Serial.println("\nStarting connection to server...");
   // if you get a connection, report back via serial:
   udp.begin(PORT);
 
-  // get our unique serial number, this unique serial number is tied to your username 
+  // get our unique serial number, this unique serial number is tied to your username
   getSerialNumber(serial_number);
-  
+
   // connect to the server and obtain our username
-  strcpy (connect_server,CONNECT_SERVER_OPERATION);
-  strcat (connect_server,serial_number);
+  strcpy (connect_server, CONNECT_SERVER_OPERATION);
+  strcat (connect_server, serial_number);
   sendMessage(connect_server); // send the connect message to the server
   receiveMessage(server_response_data); // receive the connect response from the server
   handleResponse(server_response_data); // handle the response from the server
+
+  myReceiver.enableIRIn(); // Start the receiver
+  Serial.println(F("Ready to receive IR signals"));
 }
 
-void loop() 
+void loop()
 {
-  
-  // wait 5 seconds for connection:
-  delay(5000);
+  //Continue looping until you get a complete signal received
+  if (myReceiver.getResults()) {
+    myDecoder.decode();           //Decode it
+    myDecoder.dumpResults(true);  //Now print results. Use false for less detail
+
+    if (myDecoder.value == 0x10EFD827)
+    {
+      Serial.println("IR Remote POWER BUTTON");
+    }
+    
+    myReceiver.enableIRIn();      //Restart receiver
+  }
 }
 
 void getSerialNumber(char * serial_number) {
@@ -78,7 +94,7 @@ void getSerialNumber(char * serial_number) {
   sprintf(buf, "%8x%8x%8x%8x", val1, val2, val3, val4);
   Serial.println(buf);
 
-  strcat (serial_number,buf);
+  strcat (serial_number, buf);
 }
 
 void connectWifi()
@@ -126,8 +142,8 @@ void sendMessage(char message[])
 {
   Serial.print("Sending Message: ");
   Serial.println(message);
-  
-  // Ask the connect to the server and obtain our username 
+
+  // Ask the connect to the server and obtain our username
   udp.beginPacket(server, 8000);
   udp.write(message);
   udp.endPacket();
@@ -138,9 +154,9 @@ void receiveMessage(char * response)
   // if there's data available, read a packet
   int packetSize = udp.parsePacket();
   char packetBuffer[255];
-  
-  while(!packetSize) packetSize = udp.parsePacket();
-  
+
+  while (!packetSize) packetSize = udp.parsePacket();
+
   Serial.print("Received packet of size ");
   Serial.println(packetSize);
   Serial.print("From ");
@@ -161,20 +177,20 @@ void handleResponse(char response[])
   if (strlen(response) < 1)
     return;
 
-  switch(response[0])
+  switch (response[0])
   {
-    case CONNECT_SERVER_OPERATION[0]: 
-    {
-      memmove(username, response+1, strlen(response));
-      Serial.print("Username: ");
-      Serial.println(username);
-      break;
-    }
-    
+    case CONNECT_SERVER_OPERATION[0]:
+      {
+        memmove(username, response + 1, strlen(response));
+        Serial.print("Username: ");
+        Serial.println(username);
+        break;
+      }
+
     default:
-    {
-      break;
-    }
+      {
+        break;
+      }
   }
 }
 
